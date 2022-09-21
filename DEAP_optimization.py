@@ -1,5 +1,6 @@
 import multiprocessing
 import sys
+from tracemalloc import Statistic
 
 sys.path.insert(0, 'evoman/')
 from environment import Environment
@@ -10,9 +11,10 @@ from deap import creator, tools, algorithms, base
 
 import numpy as np
 import os
+import pickle
 
 # enemy_id
-enemy_id = 3
+enemy_id = 1
 
 run_mode = 'train'  # train or test
 
@@ -127,24 +129,38 @@ if __name__ == '__main__':
 
     ##################  EVOLVING DEAP MODEL ##################
     
-    # evolve certain generations
-    for generation in range(generation_count):
-        print("###### Current generation:", generation)
+    # # evolve certain generations
+    # for generation in range(generation_count):
+    #     print("###### Current generation:", generation)
         
-        ''' 
-        the crossover algorithm used here only applies on the variation part (crossover 
-        and mutation) should be tuned in the future (assignment requirement: 2 EAs)
-        '''     
-        offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
+    #     ''' 
+    #     the crossover algorithm used here only applies on the variation part (crossover 
+    #     and mutation) should be tuned in the future (assignment requirement: 2 EAs)
+    #     '''     
+    #     offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
 
-        # evaluate the offspring fitness
-        fits = toolbox.map(toolbox.evaluate, offspring)
-        for fit, ind in zip(fits, offspring):
-            ind.fitness.values = fit
+    #     # evaluate the offspring fitness
+    #     fits = toolbox.map(toolbox.evaluate, offspring)
+    #     for fit, ind in zip(fits, offspring):
+    #         ind.fitness.values = fit
         
-        # select best offsprings
-        population = toolbox.select(offspring, k=len(population))
+    #     # select best offsprings
+    #     population = toolbox.select(offspring, k=len(population))
+
+    # Define statistics, all of the statistics will be stored in logBook
+    s = tools.Statistics(key=lambda ind: ind.fitness.values)
+    s.register('mean', np.mean)
+    s.register('std', np.std)
+    s.register('max', max)
+
+    # The simplest evolutionary algorithm (SGA)
+    population, logBook = algorithms.eaSimple(population, toolbox, cxpb=0.5, mutpb=0.2,
+                            ngen=generation_count, stats=s)
     
     # select the best solution
     top = tools.selBest(population, k=1)
     np.savetxt(experiment_name + f'/best_{enemy_id}.txt', top)
+
+    # save logBook
+    with open(f'logBook/best_{enemy_id}_SEA_logBook.pkl', 'wb') as f:
+        pickle.dump(logBook, f)
