@@ -1,3 +1,4 @@
+from copy import copy
 import multiprocessing
 import sys
 from tracemalloc import Statistic
@@ -5,20 +6,20 @@ from tracemalloc import Statistic
 sys.path.insert(0, 'evoman/')
 from environment import Environment
 from demo_controller import player_controller
+from deap import creator, tools, base
 
 import random
-from deap import creator, tools, algorithms, base
-
 import numpy as np
 import os
 import pickle
+from sklearn.preprocessing import MinMaxScaler
 
 # enemy_id
 enemy_id = 1
 
 run_mode = 'train'  # train or test
 
-experiment_name = 'DEAP_optimization'
+experiment_name = 'biased_mating_probobility'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
@@ -45,8 +46,8 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 # dom_l = -1
 
 # Evolution settings
-population_number = 50
-generation_count = 20
+population_number = 100
+NGEN = 30
 mutation_rate = 0.20
 
 # runs evoman game simulation
@@ -62,6 +63,14 @@ def evaluate(x):
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", np.ndarray, fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
+
+# Define statistics, all of the statistics will be stored in logBook
+s = tools.Statistics(key=lambda ind: ind.fitness.values[0])
+s.register('mean', np.mean)
+s.register('std', np.std)
+s.register('max', max)
+
+logbook = tools.Logbook()
 
 # For the usage of numpy.ndarray
 def cxTwoPointCopy(ind1, ind2):
@@ -92,6 +101,63 @@ def cxTwoPointCopy(ind1, ind2):
 
     return ind1, ind2
 
+def main():
+    pop = toolbox.population(n=population_number)
+    MUTPB = 0.2
+
+    # Evaluate the entire population
+    fitnesses = np.array(toolbox.map(toolbox.evaluate, pop))
+
+    for ind, fit in zip(pop, fitnesses):
+        ind.fitness.values = fit
+
+    for g in range(NGEN):
+
+        '''select the offspring based on fitness values (biased probobility)'''
+        # scales the fitness values between (0,1) to avoid negative probability
+        # for every generation
+        scaler = MinMaxScaler(copy=True)
+        fitness_norm = scaler.fit_transform(fitnesses).flatten()
+
+        # Select the next generation individuals
+        offspring = toolbox.select(pop, len(pop))
+        # Clone the selected individuals
+        offspring = toolbox.map(toolbox.clone, offspring)
+
+        for index_1, (child1, child2) in enumerate(zip(offspring[::2], offspring[1::2])):
+
+            child1_prob, child2_prob = fitness_norm[index_1], \
+                                   fitness_norm[index_1+1]
+
+            # Why using OR here? Because the mating procedure should be dominated by
+            # the parent with large fitness value. i.e. The good genes are more likely
+            # to be passed on. (my point of view).
+            if (random.random() < child1_prob) or (random.random() < child2_prob):
+                toolbox.mate(child1, child2)
+                del child1.fitness.values
+                del child2.fitness.values
+
+        for mutant in offspring:
+            if random.random() < MUTPB:
+                toolbox.mutate(mutant)
+                del mutant.fitness.values
+
+        # Evaluate all the individuals
+        # Note!!! This will slow down the algorithm speed, but it is essential
+        # if you want to set the probability of mating based on ftness value
+        fitnesses = np.array(toolbox.map(toolbox.evaluate, offspring))
+
+        for ind, fit in zip(offspring, fitnesses):
+            ind.fitness.values = fit
+
+        # The population is entirely replaced by the offspring
+        pop[:] = offspring
+
+        # record statistics
+        record = s.compile(pop)
+        logbook.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
+
+    return pop, logbook
 
 
 if __name__ == '__main__':
@@ -106,7 +172,7 @@ if __name__ == '__main__':
     # else:
     #     # Disable the visulization for training modes, increasing training speed
     #     os.environ["SDL_VIDEODRIVER"] = "dummy"
-
+    
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
     # set multiprocessing cores
@@ -123,44 +189,14 @@ if __name__ == '__main__':
     toolbox.register("mate", cxTwoPointCopy)
     toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=mutation_rate)
     toolbox.register("select", tools.selTournament, tournsize=3)
-    
-    # set population
-    population = toolbox.population(n=population_number)
 
-    ##################  EVOLVING DEAP MODEL ##################
-    
-    # # evolve certain generations
-    # for generation in range(generation_count):
-    #     print("###### Current generation:", generation)
-        
-    #     ''' 
-    #     the crossover algorithm used here only applies on the variation part (crossover 
-    #     and mutation) should be tuned in the future (assignment requirement: 2 EAs)
-    #     '''     
-    #     offspring = algorithms.varAnd(population, toolbox, cxpb=0.5, mutpb=0.2)
-
-    #     # evaluate the offspring fitness
-    #     fits = toolbox.map(toolbox.evaluate, offspring)
-    #     for fit, ind in zip(fits, offspring):
-    #         ind.fitness.values = fit
-        
-    #     # select best offsprings
-    #     population = toolbox.select(offspring, k=len(population))
-
-    # Define statistics, all of the statistics will be stored in logBook
-    s = tools.Statistics(key=lambda ind: ind.fitness.values)
-    s.register('mean', np.mean)
-    s.register('std', np.std)
-    s.register('max', max)
-
-    # The simplest evolutionary algorithm (SGA)
-    population, logBook = algorithms.eaSimple(population, toolbox, cxpb=0.5, mutpb=0.2,
-                            ngen=generation_count, stats=s)
+    ################## EVOLVING DEAP MODEL ##################
+    pop, logbook = main()
     
     # select the best solution
-    top = tools.selBest(population, k=1)
+    top = tools.selBest(pop, k=1)
     np.savetxt(experiment_name + f'/best_{enemy_id}.txt', top)
 
     # save logBook
-    with open(f'logBook/best_{enemy_id}_SEA_logBook.pkl', 'wb') as f:
-        pickle.dump(logBook, f)
+    with open(f'logBook/best_{enemy_id}_{experiment_name}_logBook.pkl', 'wb') as f:
+        pickle.dump(logbook, f)
