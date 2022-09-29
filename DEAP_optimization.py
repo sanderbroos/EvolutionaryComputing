@@ -46,8 +46,8 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 # dom_l = -1
 
 # Evolution settings
-population_number = 30
-NGEN = 10
+population_number = 100
+NGEN = 30
 mutation_rate = 0.20
 
 # runs evoman game simulation
@@ -70,8 +70,7 @@ s.register('mean', np.mean)
 s.register('std', np.std)
 s.register('max', max)
 
-logbook_biased = tools.Logbook()
-logbook_random = tools.Logbook()
+logbook = tools.Logbook()
 
 # For the usage of numpy.ndarray
 def cxTwoPointCopy(ind1, ind2):
@@ -162,7 +161,7 @@ def main_biased_mating():
 
         # record statistics
         record = s.compile(pop)
-        logbook_biased.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
+        logbook.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
 
         # toolbox.unregister('mutate')
 
@@ -207,7 +206,7 @@ def main_random_mating():
 
         # record statistics
         record = s.compile(pop)
-        logbook_random.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
+        logbook.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
 
     return pop
 
@@ -232,7 +231,7 @@ if __name__ == '__main__':
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
-    runs = 3
+    runs = 10
     
     for run in range(runs):
         # set multiprocessing cores
@@ -254,7 +253,18 @@ if __name__ == '__main__':
         ################## EVOLVING DEAP MODEL ##################
 
         pop_biased = main_biased_mating()
+        # save logBook
+        with open(f'logBook/biased/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
+            pickle.dump(logbook, f)
+
+        logbook.clear()
+        
         pop_random = main_random_mating()
+        # save logBook
+        with open(f'logBook/random/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
+            pickle.dump(logbook, f)
+
+        logbook.clear()
         
         # select the best solution
         top_biased = tools.selBest(pop_biased, k=1)
@@ -263,8 +273,3 @@ if __name__ == '__main__':
         np.savetxt(f'solution/biased/enemy_{enemy_id}/solution_run_{run}.txt', top_biased)
         np.savetxt(f'solution/random/enemy_{enemy_id}/solution_run_{run}.txt', top_random)
 
-        # save logBook
-        with open(f'logBook/biased/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
-            pickle.dump(logbook_biased, f)
-        with open(f'logBook/random/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
-            pickle.dump(logbook_random, f)
