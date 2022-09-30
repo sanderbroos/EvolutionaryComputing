@@ -1,5 +1,3 @@
-from copy import copy
-from json import tool
 import multiprocessing
 import sys
 
@@ -235,7 +233,7 @@ if __name__ == '__main__':
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
-    runs = 1
+    runs = 10
     
     for run in range(runs):
         # set multiprocessing cores
