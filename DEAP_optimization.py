@@ -47,7 +47,7 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 
 # Evolution settings
 population_number = 100
-NGEN = 50
+NGEN = 40
 mutation_rate = 0.20
 
 # runs evoman game simulation
@@ -111,6 +111,8 @@ def main_biased_mating():
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
 
+    scaler = MinMaxScaler(copy=True, feature_range=(0, 100))
+
     for g in range(NGEN):
         
         # # adaptive mutation rate?
@@ -122,7 +124,6 @@ def main_biased_mating():
         '''select the offspring based on fitness values (biased probobility)'''
         # scales the fitness values between (0,1) to avoid negative probability
         # for every generation
-        scaler = MinMaxScaler(copy=True)
         fitness_norm = scaler.fit_transform(fitnesses).flatten()
 
         # Select the next generation individuals
@@ -132,13 +133,14 @@ def main_biased_mating():
 
         for index_1, (child1, child2) in enumerate(zip(offspring[::2], offspring[1::2])):
 
-            child1_prob, child2_prob = fitness_norm[index_1], \
-                                   fitness_norm[index_1+1]
-
+            child1_prob, child2_prob = fitness_norm[index_1*2], \
+                                   fitness_norm[index_1*2+1]
+        
             # Why using OR here? Because the mating procedure should be dominated by
             # the parent with large fitness value. i.e. The good genes are more likely
             # to be passed on. (my point of view).
-            if (random.random() < child1_prob) or (random.random() < child2_prob):
+            rand = random.randint(0, 100)
+            if (rand < child1_prob) or (rand < child2_prob):
                 toolbox.mate(child1, child2)
                 del child1.fitness.values
                 del child2.fitness.values
@@ -231,7 +233,7 @@ if __name__ == '__main__':
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
-    runs = 10
+    runs = 1
     
     for run in range(runs):
         # set multiprocessing cores
