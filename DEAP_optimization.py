@@ -12,6 +12,8 @@ import os
 import pickle
 from sklearn.preprocessing import MinMaxScaler
 
+import time
+
 # enemy_id
 enemy_id = 1
 
@@ -45,7 +47,7 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 
 # Evolution settings
 population_number = 100
-NGEN = 40
+NGEN = 50
 mutation_rate = 0.20
 
 # runs evoman game simulation
@@ -237,6 +239,7 @@ if __name__ == '__main__':
     
     for run in range(runs):
         # set multiprocessing cores
+        start = time.time()
         pool = multiprocessing.Pool()
 
         toolbox.register("map", pool.map) # multiprocessing
@@ -275,3 +278,5 @@ if __name__ == '__main__':
         np.savetxt(f'solution/biased/enemy_{enemy_id}/solution_run_{run}.txt', top_biased)
         np.savetxt(f'solution/random/enemy_{enemy_id}/solution_run_{run}.txt', top_random)
 
+        end= time.time()
+        print(f"Run {run} takes {end - start}")
