@@ -212,6 +212,8 @@ def main_random_mating():
 
 if __name__ == '__main__':
 
+    biased = False
+
     # evaluate the model
     if run_mode == 'test':
         test_runs = 5
@@ -220,11 +222,11 @@ if __name__ == '__main__':
             # Disable the visulization for training modes, increasing training speed
             os.environ["SDL_VIDEODRIVER"] = "dummy"
 
-            bsol = np.loadtxt(experiment_name + f'/best_{enemy_id}.txt')
+            bsol = np.loadtxt(f'solution/{"biased" if biased else "random"}/enemy_{enemy_id}/solution_run_{i}.txt')
             print('\n RUNNING SAVED BEST SOLUTION \n')
-            env.update_parameter('speed', 'fast')
+            env.update_parameter('speed', 'fastest')
             evaluate(bsol)
-            sys.exit(0)
+        sys.exit(0)
     # else:
     #     # Disable the visulization for training modes, increasing training speed
     #     os.environ["SDL_VIDEODRIVER"] = "dummy"
