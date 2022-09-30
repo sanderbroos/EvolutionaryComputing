@@ -47,7 +47,7 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 
 # Evolution settings
 population_number = 100
-NGEN = 30
+NGEN = 50
 mutation_rate = 0.20
 
 # runs evoman game simulation
