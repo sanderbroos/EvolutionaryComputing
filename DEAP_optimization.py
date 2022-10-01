@@ -1,6 +1,8 @@
 import multiprocessing
 import sys
 
+from matplotlib import pyplot as plt
+
 sys.path.insert(0, 'evoman/')
 from environment import Environment
 from demo_controller import player_controller
@@ -10,12 +12,12 @@ import random
 import numpy as np
 import os
 import pickle
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, scale
 
 # enemy_id
-enemy_id = 1
+enemy_id = 4
 
-run_mode = 'train'  # train or test
+run_mode = 'test'  # train or test
 
 experiment_name = 'biased_mating_adaptive_mutation_NSGA2'
 if not os.path.exists(experiment_name):
@@ -45,7 +47,7 @@ n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1)
 
 # Evolution settings
 population_number = 100
-NGEN = 40
+NGEN = 50
 mutation_rate = 0.20
 
 # runs evoman game simulation
@@ -120,7 +122,7 @@ def main_biased_mating():
 
 
         '''select the offspring based on fitness values (biased probobility)'''
-        # scales the fitness values between (0,1) to avoid negative probability
+        # scales the fitness values between (0,100) to avoid negative probability
         # for every generation
         fitness_norm = scaler.fit_transform(fitnesses).flatten()
 
@@ -212,24 +214,28 @@ def main_random_mating():
 
 if __name__ == '__main__':
 
-    biased = False
-
     # evaluate the model
     if run_mode == 'test':
-        test_runs = 5
-        for i in range(test_runs):
 
-            # Disable the visulization for training modes, increasing training speed
-            os.environ["SDL_VIDEODRIVER"] = "dummy"
+        test_runs = 10
+        biased = [True, False]
 
-            bsol = np.loadtxt(f'solution/{"biased" if biased else "random"}/enemy_{enemy_id}/solution_run_{i}.txt')
-            print('\n RUNNING SAVED BEST SOLUTION \n')
-            env.update_parameter('speed', 'fastest')
-            evaluate(bsol)
+        for i in biased:
+            individual_gain = []
+            for j in range(test_runs):
+
+                # Disable the visulization for training modes, increasing training speed
+                os.environ["SDL_VIDEODRIVER"] = "dummy"
+
+                bsol = np.loadtxt(f'solution/{"biased" if i else "random"}/enemy_{enemy_id}/solution_run_{j}.txt')
+                print('\n RUNNING SAVED BEST SOLUTION \n')
+                env.update_parameter('speed', 'fastest')
+                output = env.play(pcont=bsol)
+                individual_gain.append(output[1] - output[2])
+            
+            np.savetxt(f'test_results/{"biased" if i else "random"}/enemy_{enemy_id}.txt', individual_gain)
+        
         sys.exit(0)
-    # else:
-    #     # Disable the visulization for training modes, increasing training speed
-    #     os.environ["SDL_VIDEODRIVER"] = "dummy"
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
