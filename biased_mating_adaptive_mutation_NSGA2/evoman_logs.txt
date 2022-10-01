@@ -4,80 +4,80 @@ MESSAGE: Pygame initialized for simulation.
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 88.97842723119598; player life: 57.400000000000325; enemy life: 0; time: 864
+RUN: run status: enemy: 2; fitness: 93.78936470590374; player life: 88; enemy life: 0; time: 150
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 91.05305686041464; player life: 79.0000000000002; enemy life: 0; time: 941
+RUN: run status: enemy: 2; fitness: 93.78272016318508; player life: 88; enemy life: 0; time: 151
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 90.41380828533967; player life: 71.80000000000027; enemy life: 0; time: 868
+RUN: run status: enemy: 2; fitness: 92.44704041507838; player life: 80; enemy life: 0; time: 258
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 88.74656208140225; player life: 55.00000000000032; enemy life: 0; time: 857
+RUN: run status: enemy: 2; fitness: 92.77065437104557; player life: 82; enemy life: 0; time: 228
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 84.94857066996364; player life: 21.40000000000024; enemy life: 0; time: 1328
+RUN: run status: enemy: 2; fitness: 94.58936470590373; player life: 96; enemy life: 0; time: 150
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 90.57017592951055; player life: 73.00000000000026; enemy life: 0; time: 837
+RUN: run status: enemy: 2; fitness: 92.84814186652393; player life: 82; enemy life: 0; time: 211
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 86.63230630065263; player life: 37.60000000000028; enemy life: 0; time: 1246
+RUN: run status: enemy: 2; fitness: 92.77065437104557; player life: 82; enemy life: 0; time: 228
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 85.86009554562249; player life: 23.200000000000244; enemy life: 0; time: 639
+RUN: run status: enemy: 2; fitness: 94.38936470590374; player life: 94; enemy life: 0; time: 150
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 89.8195853089166; player life: 65.80000000000032; enemy life: 0; time: 863
+RUN: run status: enemy: 2; fitness: 92.77065437104557; player life: 82; enemy life: 0; time: 228
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 86.06064962889992; player life: 25.00000000000025; enemy life: 0; time: 626
+RUN: run status: enemy: 2; fitness: 92.53703951986405; player life: 82; enemy life: 0; time: 288
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 88.95324522135148; player life: 58.60000000000033; enemy life: 0; time: 999
+RUN: run status: enemy: 2; fitness: 93.95014399275047; player life: 90; enemy life: 0; time: 156
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 85.40924921203809; player life: 23.200000000000244; enemy life: 0; time: 1003
+RUN: run status: enemy: 2; fitness: 93.04704041507837; player life: 86; enemy life: 0; time: 258
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 85.99012053692775; player life: 31.000000000000263; enemy life: 0; time: 1224
+RUN: run status: enemy: 2; fitness: 93.57237888630937; player life: 92; enemy life: 0; time: 278
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 90.39838452352244; player life: 72.40000000000026; enemy life: 0; time: 936
+RUN: run status: enemy: 2; fitness: 93.83521402607649; player life: 90; enemy life: 0; time: 175
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 90.62038509634581; player life: 74.80000000000024; enemy life: 0; time: 953
+RUN: run status: enemy: 2; fitness: 93.78936470590374; player life: 88; enemy life: 0; time: 150
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 89.7787169655284; player life: 65.80000000000032; enemy life: 0; time: 899
+RUN: run status: enemy: 2; fitness: 93.72700044143625; player life: 90; enemy life: 0; time: 195
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 86.81562632995694; player life: 36.400000000000276; enemy life: 0; time: 920
+RUN: run status: enemy: 2; fitness: 93.13193985886487; player life: 86; enemy life: 0; time: 237
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 88.49952363400023; player life: 55.60000000000032; enemy life: 0; time: 1165
+RUN: run status: enemy: 2; fitness: 92.58272016318507; player life: 76; enemy life: 0; time: 151
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 89.95871696552841; player life: 67.6000000000003; enemy life: 0; time: 899
+RUN: run status: enemy: 2; fitness: 93.72700044143625; player life: 90; enemy life: 0; time: 195
 
 PARAMETER CHANGE: speed = fastest
 
-RUN: run status: enemy: 4; fitness: 90.3182886595193; player life: 71.80000000000027; enemy life: 0; time: 955
+RUN: run status: enemy: 2; fitness: 92.77611947915372; player life: 78; enemy life: 0; time: 152

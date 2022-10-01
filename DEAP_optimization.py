@@ -15,7 +15,7 @@ import pickle
 from sklearn.preprocessing import MinMaxScaler, scale
 
 # enemy_id
-enemy_id = 4
+enemy_id = 2
 
 run_mode = 'test'  # train or test
 
@@ -37,7 +37,8 @@ env = Environment(experiment_name=experiment_name,
                   player_controller=player_controller(n_hidden_neurons),
                   enemymode="static",
                   level=2,
-                  speed="fastest")
+                  speed="fastest",
+                  logs='on')
 
 # number of weights for multilayer with 10 hidden neurons
 n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1) * 5
@@ -214,15 +215,16 @@ def main_random_mating():
 
 if __name__ == '__main__':
 
+    runs = 10
+
     # evaluate the model
     if run_mode == 'test':
 
-        test_runs = 10
         biased = [True, False]
 
         for i in biased:
             individual_gain = []
-            for j in range(test_runs):
+            for j in range(runs):
 
                 # Disable the visulization for training modes, increasing training speed
                 os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -239,8 +241,6 @@ if __name__ == '__main__':
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
 
-    runs = 10
-    
     for run in range(runs):
         # set multiprocessing cores
         pool = multiprocessing.Pool()
