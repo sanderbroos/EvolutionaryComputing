@@ -22,6 +22,7 @@ import time
 import numpy as np
 from math import fabs,sqrt
 import glob, os
+import pandas as pd
 
 # choose this for not using visuals and thus making experiments faster
 headless = True
@@ -34,17 +35,21 @@ if not os.path.exists(experiment_name):
 
 # enemy_id
 enemy_id = [1,2]
-NGEN = 20
+NGEN = 1
 runs = 1
+run_mode = 'test'  # train or test
 
 def eval_genomes(genomes,config):
     fitnessvalues = []
+    gainvalues = []
     for genome_id, g in genomes:
         results = env.play(pcont=g)
-        print('fitness, playerlife, enemylife, time:',results)
+        #print('fitness, playerlife, enemylife, time:',results)
         g.fitness = results[0]
+        gainvalues.append(results[1]-results[2])
         fitnessvalues.append(results[0])
     genfitnessv.append(fitnessvalues)
+    gengainv.append(gainvalues)
 
 def run():
     # Create the population, which is the top-level object for a NEAT run.
@@ -59,12 +64,11 @@ def run():
 
     # Run for up to NGEN generations.
     winner = p.run(eval_genomes, NGEN)
-    
     # Display the winning genome.
     #print('\nBest genome:\n{!s}'.format(winner))
     # Save the winner.
-    # with open('winner-Neat', 'wb') as f:
-    #     pickle.dump(winner, f)
+    with open('winner-Neat', 'wb') as f:
+        pickle.dump(winner, f)
 
 if __name__ == '__main__':
     # Determine path to configuration file. This path manipulation is
@@ -89,7 +93,24 @@ if __name__ == '__main__':
         multiplemode="yes",
         logs='off')
 
+    if run_mode == 'test':
+        test_runs = 5
+        individual_gains = []
+        for en in range(2, 9):
+            # Disable the visulization for training modes, increasing training speed
+            os.environ["SDL_VIDEODRIVER"] = "dummy"
+            bsol = pd.read_pickle(r'winner-Neat')
+            print('\n RUNNING SAVED BEST SOLUTION \n')
+            env.update_parameter('enemies',[en])
+            env.update_parameter('multiplemode','no')
+            results = env.play(pcont=bsol)
+            individual_gains.append(results[1]-results[2])
+        print(individual_gains)
+        np.savetxt(f'Neat-individual_gain',individual_gains)
+        sys.exit(0)
+
     genfitnessv = []
+    gengainv = []
     for g in range(runs):
         run()
 
@@ -97,9 +118,18 @@ if __name__ == '__main__':
 
     fit_averages = [np.mean(gen) for gen in genfitnessv]
     fit_max = [max(gen) for gen in genfitnessv]
-    plt.plot(fit_averages,label="mean")
-    plt.plot(fit_max,'--',label="max")
-    plt.title("Neat Results")
+    gain_averages = [np.mean(gen) for gen in gengainv]
+    gain_max = [max(gen) for gen in gengainv]
+    plt.plot(fit_averages,'b',label="fitmean")
+    plt.plot(fit_max,'b--',label="fitmax")
+    plt.title("Neat Fitness Results")
     plt.xlabel("Generations")
     plt.ylabel("Fitness")
     plt.show()
+    plt.plot(gain_averages,'r',label="gainmean")
+    plt.plot(gain_max,'r--',label="gainmax")
+    plt.title("Neat Gain Results")
+    plt.xlabel("Generations")
+    plt.ylabel("Gain")
+    plt.show()
+
