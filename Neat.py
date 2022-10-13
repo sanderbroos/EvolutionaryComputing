@@ -34,10 +34,10 @@ if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
 # enemy_id
-enemy_id = [1,2]
-NGEN = 1
-runs = 1
-run_mode = 'test'  # train or test
+enemy_id = [1,5,6]
+NGEN = 50
+runs = 1 # needs to be changed to 10
+run_mode = 'train'  # train or test
 
 def eval_genomes(genomes,config):
     fitnessvalues = []
@@ -96,7 +96,7 @@ if __name__ == '__main__':
     if run_mode == 'test':
         test_runs = 5
         individual_gains = []
-        for en in range(2, 9):
+        for en in range(1, 9):
             # Disable the visulization for training modes, increasing training speed
             os.environ["SDL_VIDEODRIVER"] = "dummy"
             bsol = pd.read_pickle(r'winner-Neat')
