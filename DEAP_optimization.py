@@ -1,8 +1,6 @@
 import multiprocessing
 import sys
 
-from matplotlib import pyplot as plt
-
 sys.path.insert(0, 'evoman/')
 from environment import Environment
 from demo_controller import player_controller
@@ -12,53 +10,66 @@ import random
 import numpy as np
 import os
 import pickle
-from sklearn.preprocessing import MinMaxScaler, scale
 
-# enemy_id
-enemy_id = 2
 
-run_mode = 'test'  # train or test
+experiment_name = 'NSGA-II'
 
-experiment_name = 'biased_mating_adaptive_mutation_NSGA2'
 if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
-# Disable the visulization for training modes, increasing training speed
-if run_mode == 'train':
-    os.environ["SDL_VIDEODRIVER"] = "dummy"
-
+run_mode = 'test'
 # number of hidden neurons for the neural network in player_controller module
 n_hidden_neurons = 10
-
-# initializes simulation in individual evolution mode, for single static enemy.
-env = Environment(experiment_name=experiment_name,
-                  enemies=[enemy_id],
-                  playermode="ai",
-                  player_controller=player_controller(n_hidden_neurons),
-                  enemymode="static",
-                  level=2,
-                  speed="fastest",
-                  logs='on')
-
-# number of weights for multilayer with 10 hidden neurons
-n_vars = (env.get_num_sensors() + 1) * n_hidden_neurons + (n_hidden_neurons + 1) * 5
-
-# dom_u = 1
-# dom_l = -1
+n_vars = (20 + 1) * n_hidden_neurons + (n_hidden_neurons + 1) * 5
 
 # Evolution settings
 population_number = 100
-NGEN = 50
-mutation_rate = 0.20
+NGEN = 20
+CXPB = 0.9
+mutation_rate = 0.10
+eta_SBX = 10
+eta_PM = 10
 
-# runs evoman game simulation
-def simulation(x):
-    f, p, e, t = env.play(pcont=x)
-    return f
+group = [2,5,1]
+group_id = 3
 
-# evaluation
-def evaluate(x):
-    return simulation(x),  # fitness score returned
+# To get individual player life and enemy life in multi-objective mode
+def cons_multi(value):
+    return value
+
+def environment(group, mode):
+    if mode == 'train':
+        # Disable the visulization for training modes, increasing training speed
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        env = Environment(experiment_name=experiment_name,
+                multiplemode="yes",
+                enemies=group,
+                playermode="ai",
+                player_controller=player_controller(n_hidden_neurons),
+                enemymode="static",
+                level=2,
+                speed="fastest",
+                logs='on')
+    
+    elif mode == 'test':
+        # Disable the visulization for training modes, increasing training speed
+        os.environ["SDL_VIDEODRIVER"] = "dummy"
+        env = Environment(experiment_name=experiment_name,
+                multiplemode="yes",
+                enemies=[1,2,3,4,5,6,7,8],
+                playermode="ai",
+                player_controller=player_controller(n_hidden_neurons),
+                enemymode="static",
+                level=2,
+                speed="fastest",
+                logs='on')
+        env.cons_multi = cons_multi
+    
+    else:
+        print('Wrong mode name!')
+        sys.exit(0)
+
+    return env
 
 # create fitness fucntion and individuals
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -73,130 +84,49 @@ s.register('max', max)
 
 logbook = tools.Logbook()
 
-# For the usage of numpy.ndarray
-def cxTwoPointCopy(ind1, ind2):
-    """Execute a two points crossover with copy on the input individuals. The
-    copy is required because the slicing in numpy returns a view of the data,
-    which leads to a self overwriting in the swap operation. It prevents
-    ::
 
-        >>> import numpy
-        >>> a = numpy.array((1,2,3,4))
-        >>> b = numpy.array((5,6,7,8))
-        >>> a[1:3], b[1:3] = b[1:3], a[1:3]
-        >>> print(a)
-        [1 6 7 4]
-        >>> print(b)
-        [5 6 7 8]
-    """
-    size = len(ind1)
-    cxpoint1 = random.randint(1, size)
-    cxpoint2 = random.randint(1, size - 1)
-    if cxpoint2 >= cxpoint1:
-        cxpoint2 += 1
-    else: # Swap the two cx points
-        cxpoint1, cxpoint2 = cxpoint2, cxpoint1
+env = environment(group=group, mode=run_mode)
 
-    ind1[cxpoint1:cxpoint2], ind2[cxpoint1:cxpoint2] \
-        = ind2[cxpoint1:cxpoint2].copy(), ind1[cxpoint1:cxpoint2].copy()
+# runs evoman game simulation
+def evaluate(x):
+    f, p, e, t = env.play(pcont=x)
+    return f,
 
-    return ind1, ind2
-
-def main_biased_mating():
-    pop = toolbox.population(n=population_number)
-    MUTPB = 0.2
-
-    # Evaluate the entire population
-    fitnesses = np.array(toolbox.map(toolbox.evaluate, pop))
-
-    for ind, fit in zip(pop, fitnesses):
-        ind.fitness.values = fit
-
-    scaler = MinMaxScaler(copy=True, feature_range=(0, 100))
-
-    for g in range(NGEN):
-        
-        # # adaptive mutation rate?
-        # sig = 1 # - 0.5*(g+1)/NGEN
-        # toolbox.register('mutate', tools.mutGaussian, mu=0, sigma=sig,\
-        #      indpb=mutation_rate)
-
-
-        '''select the offspring based on fitness values (biased probobility)'''
-        # scales the fitness values between (0,100) to avoid negative probability
-        # for every generation
-        fitness_norm = scaler.fit_transform(fitnesses).flatten()
-
-        # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
-        # Clone the selected individuals
-        offspring = toolbox.map(toolbox.clone, offspring)
-
-        for index_1, (child1, child2) in enumerate(zip(offspring[::2], offspring[1::2])):
-
-            child1_prob, child2_prob = fitness_norm[index_1*2], \
-                                   fitness_norm[index_1*2+1]
-        
-            # Why using OR here? Because the mating procedure should be dominated by
-            # the parent with large fitness value. i.e. The good genes are more likely
-            # to be passed on. (my point of view).
-            rand = random.randint(0, 100)
-            if (rand < child1_prob) or (rand < child2_prob):
-                toolbox.mate(child1, child2)
-                del child1.fitness.values
-                del child2.fitness.values
-
-        for mutant in offspring:
-            if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
-
-        # Evaluate all the individuals
-        # Note!!! This will slow down the algorithm speed, but it is essential
-        # if you want to set the probability of mating based on ftness value
-        fitnesses = np.array(toolbox.map(toolbox.evaluate, offspring))
-
-        for ind, fit in zip(offspring, fitnesses):
-            ind.fitness.values = fit
-
-        # The population is entirely replaced by the offspring
-        pop[:] = offspring
-
-        # record statistics
-        record = s.compile(pop)
-        logbook.record(gen=g, mean=record['mean'], std=record['std'], max=record['max'])
-
-        # toolbox.unregister('mutate')
-
-    return pop
-
-def main_random_mating():
+def main():
 
     pop = toolbox.population(n=population_number)
-    CXPB, MUTPB= 0.5, 0.2
 
-    # Evaluate the entire population
-    fitnesses = toolbox.map(toolbox.evaluate, pop)
-    for ind, fit in zip(pop, fitnesses):
+    # Evaluate the individuals with an invalid fitness
+    invalid_ind = [ind for ind in pop if not ind.fitness.valid]
+    fitnesses = toolbox.map(toolbox.evaluate, invalid_ind)
+    for ind, fit in zip(invalid_ind, fitnesses):
         ind.fitness.values = fit
 
-    for g in range(NGEN):
-        # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
+    # This is just to assign the crowding distance to the individuals
+    # no actual selection is done
+    pop = toolbox.select(pop, len(pop))
+
+    # record statistics (for first generation)
+    record = s.compile(pop)
+    logbook.record(gen=0, mean=record['mean'], std=record['std'], max=record['max'])
+
+    for g in range(1, NGEN):
+        # Vary the population
+        offspring = tools.selTournamentDCD(pop, len(pop))
         # Clone the selected individuals
         offspring = toolbox.map(toolbox.clone, offspring)
 
         # Apply crossover and mutation on the offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < CXPB:
-                toolbox.mate(child1, child2)
-                del child1.fitness.values
-                del child2.fitness.values
 
-        for mutant in offspring:
-            if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
+            if random.random() <= CXPB:
+                toolbox.mate(child1, child2)
+
+            toolbox.mutate(child1)
+            toolbox.mutate(child2)
+
+            del child1.fitness.values
+            del child2.fitness.values
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
@@ -204,8 +134,8 @@ def main_random_mating():
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness.values = fit
 
-        # The population is entirely replaced by the offspring
-        pop[:] = offspring
+        # Select the next generation population
+        pop = toolbox.select(pop + offspring, population_number)
 
         # record statistics
         record = s.compile(pop)
@@ -217,26 +147,50 @@ if __name__ == '__main__':
 
     runs = 10
 
+    # # runs evoman game simulation
+    # def evaluate(x):
+    #     f, p, e, t = env.play(pcont=x)
+    #     return f,
+
     # evaluate the model
     if run_mode == 'test':
 
-        biased = [True, False]
-
-        for i in biased:
-            individual_gain = []
-            for j in range(runs):
-
-                # Disable the visulization for training modes, increasing training speed
-                os.environ["SDL_VIDEODRIVER"] = "dummy"
-
-                bsol = np.loadtxt(f'solution/{"biased" if i else "random"}/enemy_{enemy_id}/solution_run_{j}.txt')
-                print('\n RUNNING SAVED BEST SOLUTION \n')
-                env.update_parameter('speed', 'fastest')
-                output = env.play(pcont=bsol)
-                individual_gain.append(output[1] - output[2])
-            
-            np.savetxt(f'test_results/{"biased" if i else "random"}/enemy_{enemy_id}.txt', individual_gain)
+        Gains = []
+        stat_p = []
+        stat_e = []
         
+        for run in range(runs):
+            success = 0
+
+            bsol = np.loadtxt(f'data/solution/{experiment_name}/sbx_10_pm_10/solution_run_{run}.txt')
+            print('\n RUNNING SAVED BEST SOLUTION \n')
+
+            # repeat 5 times(enemy 5 is stochastic)
+            gain = []
+            playerlife = []
+            enemylife = []
+            for i in range(2):
+                output = env.play(pcont=bsol)
+                print(output)
+                playerlife.append(output[1])
+                enemylife.append(output[2])
+                gain.append(sum(output[1]) - sum(output[2]))
+            
+            playerlife = np.mean(np.array(playerlife), axis=0)
+            enemylife = np.mean(np.array(enemylife), axis=0)
+
+            stat_p.append(playerlife)
+            stat_e.append(enemylife)
+        
+            # take the average
+            Gains.append(sum(gain)/len(gain))
+        
+        Gains = np.array(Gains).reshape(len(Gains), 1)
+
+        with open(f'PA_experiments/solution/{experiment_name}/sbx_{eta_SBX}_pm_{eta_PM}/Gain.txt',"w") as f:
+            for (Gains,stat_p,stat_e) in zip(Gains,stat_p,stat_e):
+                f.write("{0},{1},{2}\n".format(Gains,stat_p,stat_e))
+            
         sys.exit(0)
     
     ################## INITIALIZATION OF DEAP MODEL ################## 
@@ -253,31 +207,29 @@ if __name__ == '__main__':
 
         # create operators
         toolbox.register("evaluate", evaluate)
-        toolbox.register("mate", cxTwoPointCopy)
-        # To apply adaptive mutation step size, this is defined in the main function
-        toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=1, indpb=mutation_rate)
-        toolbox.register("select", tools.selTournament, tournsize=3)
+        toolbox.register("select", tools.selNSGA2)
 
+        toolbox.register("mate", tools.cxSimulatedBinaryBounded, eta=eta_SBX, low=-1, up=1)
+        # To apply adaptive mutation step size, this is defined in the main function
+        toolbox.register("mutate", tools.mutPolynomialBounded, eta=eta_PM, low=-1, up=1, indpb=mutation_rate)
+        
         ################## EVOLVING DEAP MODEL ##################
 
-        pop_biased = main_biased_mating()
-        # save logBook
-        with open(f'logBook/biased/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
-            pickle.dump(logbook, f)
+        pop = main()
 
-        logbook.clear()
-        
-        pop_random = main_random_mating()
-        # save logBook
-        with open(f'logBook/random/enemy_{enemy_id}/logBook_run_{run}.pkl', 'wb') as f:
-            pickle.dump(logbook, f)
+        if not os.path.exists(f'data/logBook/{experiment_name}/sbx_10_pm_10'):
+            os.makedirs(f'data/logBook/{experiment_name}/sbx_10_pm_10')
 
-        logbook.clear()
+        if not os.path.exists(f'data/solution/{experiment_name}/sbx_10_pm_10'):
+            os.makedirs(f'data/solution/{experiment_name}/sbx_10_pm_10')
+
+        # save logBook
+        with open(f'data/logBook/{experiment_name}/sbx_10_pm_10/logBook_run_{run}.pkl', 'wb') as f:
+            pickle.dump(logbook, f)
         
         # select the best solution
-        top_biased = tools.selBest(pop_biased, k=1)
-        top_random = tools.selBest(pop_random, k=1)
+        top = tools.selBest(pop, k=1)
+        np.savetxt(f'data/solution/{experiment_name}/sbx_10_pm_10/solution_run_{run}.txt', top)
 
-        np.savetxt(f'solution/biased/enemy_{enemy_id}/solution_run_{run}.txt', top_biased)
-        np.savetxt(f'solution/random/enemy_{enemy_id}/solution_run_{run}.txt', top_random)
+        logbook.clear()
 
