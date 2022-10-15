@@ -39,7 +39,7 @@ enemy_group = [1, 2, 5]
 NGEN = 50
 # run_id
 runs = [1]  # needs to be changed to 10
-run_mode = 'train'  # train or test
+run_mode = 'test'  # train or test
 
 # Determine path to configuration file. This path manipulation is
 # here so that the script will run successfully regardless of the
@@ -161,16 +161,23 @@ def run(run_id):
 if __name__ == '__main__':
 
     if run_mode == 'test':
-        test_runs = 5
+
+        def cons_multi(value):
+            return value
+
+
+        env.cons_multi = cons_multi
+
+        bsol = pd.read_pickle(r'neat_result/1,2,5/run_1/winner')
         individual_gains = []
         for en in range(1, 9):
-            # Disable the visulization for training modes, increasing training speed
-            bsol = pd.read_pickle(r'winner')
+            # Disable the visualization for training modes, increasing training speed
             print('\n RUNNING SAVED BEST SOLUTION \n')
             env.update_parameter('enemies', [en])
-            env.update_parameter('multiplemode', 'no')
+            env.update_parameter('multiplemode', 'yes')
             results = env.play(pcont=bsol)
             individual_gains.append(results[1] - results[2])
+            # print(results)
         print(individual_gains)
         np.savetxt(f'Neat-individual_gain', individual_gains)
         sys.exit(0)
