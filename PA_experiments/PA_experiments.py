@@ -172,7 +172,7 @@ if __name__ == '__main__':
                     gain = []
                     playerlife = []
                     enemylife = []
-                    for i in range(2):
+                    for i in range(5):
                         output = env.play(pcont=bsol)
                         print(output)
                         playerlife.append(output[1])

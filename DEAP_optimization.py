@@ -23,8 +23,8 @@ n_hidden_neurons = 10
 n_vars = (20 + 1) * n_hidden_neurons + (n_hidden_neurons + 1) * 5
 
 # Evolution settings
-population_number = 100
-NGEN = 20
+population_number = 160
+NGEN = 100
 CXPB = 0.9
 mutation_rate = 0.10
 eta_SBX = 10
@@ -162,14 +162,14 @@ if __name__ == '__main__':
         for run in range(runs):
             success = 0
 
-            bsol = np.loadtxt(f'data/solution/{experiment_name}/sbx_10_pm_10/solution_run_{run}.txt')
+            bsol = np.loadtxt(f'bsol.txt')
             print('\n RUNNING SAVED BEST SOLUTION \n')
 
             # repeat 5 times(enemy 5 is stochastic)
             gain = []
             playerlife = []
             enemylife = []
-            for i in range(2):
+            for i in range(5):
                 output = env.play(pcont=bsol)
                 print(output)
                 playerlife.append(output[1])
@@ -187,7 +187,10 @@ if __name__ == '__main__':
         
         Gains = np.array(Gains).reshape(len(Gains), 1)
 
-        with open(f'PA_experiments/solution/{experiment_name}/sbx_{eta_SBX}_pm_{eta_PM}/Gain.txt',"w") as f:
+        if not os.path.exists(f'bsol_Gain/'):
+            os.makedirs(f'bsol_Gain/')
+
+        with open(f'bsol_Gain/best_Gain_run_{run}.txt',"w") as f:
             for (Gains,stat_p,stat_e) in zip(Gains,stat_p,stat_e):
                 f.write("{0},{1},{2}\n".format(Gains,stat_p,stat_e))
             
@@ -217,19 +220,19 @@ if __name__ == '__main__':
 
         pop = main()
 
-        if not os.path.exists(f'data/logBook/{experiment_name}/sbx_10_pm_10'):
-            os.makedirs(f'data/logBook/{experiment_name}/sbx_10_pm_10')
+        if not os.path.exists(f'data/logBook/{experiment_name}/sbx_10_pm_10_160_100'):
+            os.makedirs(f'data/logBook/{experiment_name}/sbx_10_pm_10_160_100')
 
-        if not os.path.exists(f'data/solution/{experiment_name}/sbx_10_pm_10'):
-            os.makedirs(f'data/solution/{experiment_name}/sbx_10_pm_10')
+        if not os.path.exists(f'data/solution/{experiment_name}/sbx_10_pm_10_160_100'):
+            os.makedirs(f'data/solution/{experiment_name}/sbx_10_pm_10_160_100')
 
         # save logBook
-        with open(f'data/logBook/{experiment_name}/sbx_10_pm_10/logBook_run_{run}.pkl', 'wb') as f:
+        with open(f'data/logBook/{experiment_name}/sbx_10_pm_10_160_100/logBook_run_{run}.pkl', 'wb') as f:
             pickle.dump(logbook, f)
         
         # select the best solution
         top = tools.selBest(pop, k=1)
-        np.savetxt(f'data/solution/{experiment_name}/sbx_10_pm_10/solution_run_{run}.txt', top)
+        np.savetxt(f'data/solution/{experiment_name}/sbx_10_pm_10_160_100/solution_run_{run}.txt', top)
 
         logbook.clear()
 
