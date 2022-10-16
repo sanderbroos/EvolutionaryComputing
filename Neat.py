@@ -35,11 +35,11 @@ if not os.path.exists(experiment_name):
     os.makedirs(experiment_name)
 
 # enemy_id
-enemy_group = [1, 2, 5]
+enemy_group = [7, 8]
 NGEN = 50
 # run_id
-runs = [1]  # needs to be changed to 10
-run_mode = 'test'  # train or test
+runs = [2, 3]  # needs to be changed to 10
+run_mode = 'train'  # train or test
 
 # Determine path to configuration file. This path manipulation is
 # here so that the script will run successfully regardless of the
