@@ -38,7 +38,7 @@ if not os.path.exists(experiment_name):
 enemy_group = [7, 8]
 NGEN = 50
 # run_id
-runs = [2, 3]  # needs to be changed to 10
+runs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # needs to be changed to 10
 run_mode = 'train'  # train or test
 
 # Determine path to configuration file. This path manipulation is
