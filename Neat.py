@@ -39,7 +39,7 @@ enemy_group = [7, 8]
 NGEN = 50
 # run_id
 runs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]  # needs to be changed to 10
-run_mode = 'train'  # train or test
+run_mode = 'test'  # train or test
 
 # Determine path to configuration file. This path manipulation is
 # here so that the script will run successfully regardless of the
@@ -164,25 +164,23 @@ if __name__ == '__main__':
 
         def cons_multi(value):
             return value
-
-
         env.cons_multi = cons_multi
-
-        bsol = pd.read_pickle(r'neat_result/1,2,5/run_1/winner')
-        individual_gains = []
-        for en in range(1, 9):
-            # Disable the visualization for training modes, increasing training speed
-            print('\n RUNNING SAVED BEST SOLUTION \n')
-            env.update_parameter('enemies', [en])
-            env.update_parameter('multiplemode', 'yes')
-            results = env.play(pcont=bsol)
-            individual_gains.append(results[1] - results[2])
-            # print(results)
-        print(individual_gains)
-        np.savetxt(f'Neat-individual_gain', individual_gains)
-        sys.exit(0)
-
-    for run_id in runs:
-        run(run_id)
+        env.update_parameter('multiplemode', 'no')
+        for run in runs:
+            bsol = pd.read_pickle(f'neat_result/{",".join(str(enemy) for enemy in enemy_group)}/run_{run}/winner')
+            individual_gains = []
+            for en in range(1, 9):
+                # Disable the visualization for training modes, increasing training speed
+                # print('\n RUNNING SAVED BEST SOLUTION \n')
+                env.update_parameter('enemies', [en])
+                results = env.play(pcont=bsol)
+                individual_gains.append(results[1] - results[2])
+                # print(results)
+            print(individual_gains)
+            # np.savetxt(f'Neat-individual_gain', individual_gains)
+            # sys.exit(0)
+    else:
+        for run_id in runs:
+            run(run_id)
 
     # genfitnessv variable currently isn't set up for multiple runs
